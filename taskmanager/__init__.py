@@ -10,9 +10,19 @@ app = Flask(__name__)
 if os.path.exists('env.py'):
     import env  # noqa
 
-# Configure the app with secret key and database URI
+# Configure the app with secret key
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DB_URL")
+
+# Configure the SQLALCHEMY_DATABASE_URI based on the environment
+if os.environ.get("DEVELOPMENT") == "True":
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
+        "DB_URL")  # Local database URL for development
+else:
+    uri = os.environ.get("DATABASE_URL")
+    # Adjust for compatibility with the older 'postgres://' format
+    if uri.startswith("postgres://"):
+        uri = uri.replace("postgres://", "postgresql://", 1)
+    app.config["SQLALCHEMY_DATABASE_URI"] = uri  # Set the URI for production
 
 # Initialize the database with the app
 db = SQLAlchemy(app)
